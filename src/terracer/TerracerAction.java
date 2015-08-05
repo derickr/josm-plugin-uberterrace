@@ -225,7 +225,7 @@ public final class TerracerAction extends JosmAction {
             // Special case of one outline and one address node.
             // Don't open the dialog
             try {
-                terraceBuilding(outline, null, init, street, associatedStreet, 0, null, null, 0, housenumbers, streetname, associatedStreet != null, false, false, "yes");
+                terraceBuilding(outline, null, init, street, associatedStreet, 0, null, null, 0, housenumbers, streetname, associatedStreet != null, false, false, "yes", "");
             } catch (UserCancelException ex) {
                 // Ignore
             } finally {
@@ -318,9 +318,10 @@ public final class TerracerAction extends JosmAction {
      */
     public void terraceBuilding(final Way outline, final Way template, Node init, Way street, Relation associatedStreet, Integer segments,
                 String start, String end, int step, List<Node> housenumbers, String streetName, boolean handleRelations,
-                boolean keepOutline, boolean fancyOutline, String buildingValue) throws UserCancelException {
+                boolean keepOutline, boolean fancyOutline, String buildingValue, String levels) throws UserCancelException {
         final int nb;
         Integer to = null, from = null;
+		int fancyExtensionLevels = -1;
         if (housenumbers == null || housenumbers.isEmpty()) {
             to = getNumber(end);
             from = getNumber(start);
@@ -338,6 +339,9 @@ public final class TerracerAction extends JosmAction {
         } else {
             nb = housenumbers.size();
         }
+		if (!levels.equals("")) {
+			fancyExtensionLevels = getNumber(levels);
+		}
 
         // now find which is the longest side connecting the first node
         Pair<Way, Way> interp = findFrontAndBack(outline);
@@ -385,11 +389,16 @@ public final class TerracerAction extends JosmAction {
                     }
                     double amountOdd = swap ? -0.66 : 0.66;
                     double amountEven = swap ? -0.33 : 0.33;
+					double amountFull = swap ? -0.99 : 0.99;
                     if (i != nb) {
                         if (i % 2 == 0) {
                             newNodes[2][i] = interpolateAlong(middles.b, backLength * (iDir + amountEven) / nb);
                             newNodes[3][i] = interpolateAlong(interp.b, backLength * (iDir + amountEven) / nb);
                             middleNodes.add(newNodes[2][i]);
+							if (fancyExtensionLevels != -1) {
+								newNodes[4][i] = interpolateAlong(middles.b, backLength * (iDir + amountFull) / nb);
+								middleNodes.add(newNodes[4][i]);
+							}
                         } else {
                             newNodes[2][i] = interpolateAlong(interp.b, backLength * (iDir + amountOdd) / nb);
                             newNodes[3][i] = interpolateAlong(middles.b, backLength * (iDir + amountOdd) / nb);
@@ -414,23 +423,26 @@ public final class TerracerAction extends JosmAction {
                         this.commands.add(new AddCommand(newNodes[3][i]));
                     else
                         reusedNodes.add(newNodes[3][i]);
+
+					if (i % 2 == 0 && fancyExtensionLevels != -1) {
+						this.commands.add(new AddCommand(newNodes[4][i]));
+					}
                 }
             }
 
             // assemble new quadrilateral, closed ways
             for (int i = 0; i < nb; ++i) {
                 final Way terr;
-       //         if (i > 0 || keepOutline) {
-                    terr = new Way();
-                    // add the tags of the outline to each building (e.g. source=*)
-                    TagCollection.from(outline).applyTo(terr);
-         //       } else {
-           //         terr = new Way(outline);
-             //       terr.setNodes(null);
-               // }
+
+				terr = new Way();
+
+				TagCollection.from(outline).applyTo(terr);
 
                 terr.addNode(newNodes[0][i]);
                 terr.addNode(newNodes[0][i + 1]);
+                if (fancyOutline && i % 2 == 0 && fancyExtensionLevels != -1) {
+					terr.addNode(newNodes[4][i]);
+				}
                 terr.addNode(newNodes[1][i + 1]);
 
                 if (fancyOutline) {
@@ -440,16 +452,46 @@ public final class TerracerAction extends JosmAction {
                 } else {
                     terr.addNode(newNodes[1][i]);
                 }
+                if (fancyOutline && (i % 2 == 1) && fancyExtensionLevels != -1) {
+					terr.addNode(newNodes[4][i-1]);
+				}
                 terr.addNode(newNodes[0][i]);
 
                 ways.add(addressBuilding(terr, street, streetName, associatedStreet, housenumbers, i,
                         from != null ? Integer.toString(from + i * step) : null, buildingValue));
 
-//                if (i > 0 || keepOutline) {
-                    this.commands.add(new AddCommand(terr));
-  //              } else {
-    //                this.commands.add(new ChangeCommand(outline, terr));
-      //          }
+				this.commands.add(new AddCommand(terr));
+
+				if (fancyExtensionLevels != -1) {
+					final Way roofPart;
+
+					roofPart = new Way();
+
+					TagCollection.from(outline).applyTo(roofPart);
+					roofPart.addNode(newNodes[0][i]);
+					roofPart.addNode(newNodes[0][i+1]);
+                    if (i % 2 == 0) {
+                        roofPart.addNode(newNodes[4][i]);
+                        roofPart.addNode(newNodes[2][i]);
+                        roofPart.addNode(newNodes[1][i]);
+                    } else {
+                        roofPart.addNode(newNodes[1][i+1]);
+                        roofPart.addNode(newNodes[3][i]);
+                        roofPart.addNode(newNodes[4][i-1]);
+                    }
+					roofPart.addNode(newNodes[0][i]);
+
+					roofPart.remove("building");
+					roofPart.remove("addr:housenumber");
+					roofPart.remove("addr:street");
+					roofPart.put("building:part", "yes");
+
+					terr.remove("roof:orientation");
+                    terr.put("building:levels", String.valueOf(fancyExtensionLevels));
+					terr.put("roof:shape", "flat");
+
+					this.commands.add(new AddCommand(roofPart));
+				}
             }
 
             if (!keepOutline) {

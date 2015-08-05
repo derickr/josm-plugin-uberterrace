@@ -307,7 +307,10 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
                             streetName(),
                             doHandleRelation(),
                             doKeepOutline(), 
-							doFancyOutline(), buildingType());
+							doFancyOutline(),
+							buildingType(),
+							dialog.fancyExtensionLevels.getText()
+						);
                     } catch (UserCancelException ex) {
                         // Ignore
                     }

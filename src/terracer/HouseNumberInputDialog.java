@@ -85,6 +85,8 @@ public class HouseNumberInputDialog extends ExtendedDialog {
     JCheckBox handleRelationCheckBox;
     JCheckBox keepOutlineCheckBox;
     JCheckBox fancyOutlineCheckBox;
+    private JLabel fancyExtensionLevelsLabel;
+    JTextField fancyExtensionLevels;
 
     HouseNumberInputHandler inputHandler;
 
@@ -179,6 +181,7 @@ public class HouseNumberInputDialog extends ExtendedDialog {
             loLabel.setToolTipText(tr("Lowest housenumber of the terraced house"));
             hiLabel = new JLabel(tr("Highest Number"));
             numbersLabel = new JLabel(tr("List of Numbers"));
+			fancyExtensionLevelsLabel = new JLabel(tr("Levels in extension"));
             loLabel.setPreferredSize(new Dimension(111, 16));
             final String txt = relationExists ? tr("add to existing associatedStreet relation") : tr("create an associatedStreet relation");
 
@@ -213,6 +216,8 @@ public class HouseNumberInputDialog extends ExtendedDialog {
             inputPanel.add(handleRelationCheckBox, GBC.eol().insets(3,3,0,0));
             inputPanel.add(keepOutlineCheckBox, GBC.eol().insets(3,3,0,0));
             inputPanel.add(fancyOutlineCheckBox, GBC.eol().insets(3,3,0,0));
+            inputPanel.add(fancyExtensionLevelsLabel, GBC.std().insets(3,3,0,0));
+            inputPanel.add(getExtensionlevels(), GBC.eol().fill(GBC.HORIZONTAL).insets(5,3,0,0));
 
             if (numbers.isVisible()) {
                 loLabel.setVisible(false);
@@ -263,6 +268,19 @@ public class HouseNumberInputDialog extends ExtendedDialog {
             hi.setText("");
         }
         return hi;
+    }
+
+    /**
+     * This method initializes extensionLevels
+     *
+     * @return javax.swing.JTextField
+     */
+    private JTextField getExtensionlevels() {
+        if (fancyExtensionLevels == null) {
+            fancyExtensionLevels = new JTextField();
+            fancyExtensionLevels.setText("");
+        }
+        return fancyExtensionLevels;
     }
 
     /**
