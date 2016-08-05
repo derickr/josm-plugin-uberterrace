@@ -35,7 +35,6 @@ import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
-import org.openstreetmap.josm.corrector.UserCancelException;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
@@ -47,6 +46,7 @@ import org.openstreetmap.josm.gui.ExtendedDialog;
 import org.openstreetmap.josm.gui.conflict.tags.CombinePrimitiveResolverDialog;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Shortcut;
+import org.openstreetmap.josm.tools.UserCancelException;
 
 /**
  * Terraces a quadrilateral, closed way into a series of quadrilateral,
@@ -108,7 +108,7 @@ public final class TerracerAction extends JosmAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Collection<OsmPrimitive> sel = getCurrentDataSet().getSelected();
+        Collection<OsmPrimitive> sel = getLayerManager().getEditDataSet().getSelected();
         Way outline = null;
         Way template = null;
         Way street = null;
@@ -502,7 +502,7 @@ public final class TerracerAction extends JosmAction {
                     if (!n.hasKeys() && n.getReferrers().size() == 1 && !reusedNodes.contains(n))
                         nodesToDelete.add(n);
                 if (!nodesToDelete.isEmpty())
-                    this.commands.add(DeleteCommand.delete(Main.main.getEditLayer(), nodesToDelete));
+                    this.commands.add(DeleteCommand.delete(Main.getLayerManager().getEditLayer(), nodesToDelete));
 
                 this.commands.add(new DeleteCommand(outline));
             }
@@ -514,7 +514,7 @@ public final class TerracerAction extends JosmAction {
         // Remove the address nodes since their tags have been incorporated into the terraces.
         // Or should removing them also be an option?
         if (!housenumbers.isEmpty()) {
-            commands.add(DeleteCommand.delete(Main.main.getEditLayer(),
+            commands.add(DeleteCommand.delete(Main.getLayerManager().getEditLayer(),
                     housenumbers, true, true));
         }
 
@@ -529,13 +529,13 @@ public final class TerracerAction extends JosmAction {
         Main.main.undoRedo.add(createTerracingCommand(outline));
         if (nb <= 1 && street != null) {
             // Select the way (for quick selection of a new house (with the same way))
-            Main.main.getCurrentDataSet().setSelected(street);
+            Main.getLayerManager().getEditDataSet().setSelected(street);
         } else {
             // Select the new building outlines (for quick reversing)
             if (fancyOutline) {
-                Main.main.getCurrentDataSet().setSelected(middleNodes);
+                Main.getLayerManager().getEditDataSet().setSelected(middleNodes);
             } else {
-                Main.main.getCurrentDataSet().setSelected(ways);
+                Main.getLayerManager().getEditDataSet().setSelected(ways);
             }
         }
     }
@@ -893,6 +893,6 @@ public final class TerracerAction extends JosmAction {
 
     @Override
     protected void updateEnabledState() {
-        setEnabled(getCurrentDataSet() != null);
+        setEnabled(getLayerManager().getEditDataSet() != null);
     }
 }
