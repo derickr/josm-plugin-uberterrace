@@ -1,10 +1,4 @@
-/**
- * Terracer: A JOSM Plugin for terraced houses.
- *
- * Copyright 2009 CloudMade Ltd.
- *
- * Released under the GPLv2, see LICENSE file for details.
- */
+// License: GPL. For details, see LICENSE file.
 package terracer;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
@@ -41,7 +35,7 @@ import org.openstreetmap.josm.tools.UserCancelException;
  * of the HouseNumberInputDialog. This is desired design, as the HouseNumberInputDialog
  * is already cluttered with auto-generated layout code.
  *
- * @author casualwalker
+ * @author casualwalker - Copyright 2009 CloudMade Ltd
  */
 public class HouseNumberInputHandler extends JosmAction implements ActionListener, FocusListener, ItemListener {
     private final TerracerAction terracerAction;
@@ -96,7 +90,7 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
      * @return The first button that matches the caption or null if not found
      */
     private static JButton getButton(Container root, String caption) {
-        Component children[] = root.getComponents();
+        Component[] children = root.getComponents();
         for (Component child : children) {
             JButton b;
             if (child instanceof JButton) {
@@ -127,7 +121,7 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
 
         // Allow non numeric characters for the low number as long as there is
         // no high number of the segmentcount is 1
-        if (dialog.hi.getText().length() > 0 && (segments()!= null || segments() < 1)) {
+        if (dialog.hi.getText().length() > 0 && (segments() != null || segments() < 1)) {
             isOk = isOk
                     && checkNumberStringField(dialog.lo, tr("Lowest number"),
                             message);
@@ -312,7 +306,7 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
 							dialog.fancyExtensionLevels.getText()
 						);
                     } catch (UserCancelException ex) {
-                        // Ignore
+                        Main.trace(ex);
                     }
 
                     this.dialog.setVisible(false);
@@ -402,12 +396,9 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
             return null;
         } else {
             String name;
-            if (selected instanceof AutoCompletionListItem)
-            {
-               name = ((AutoCompletionListItem)selected).getValue();
-            }
-            else
-            {
+            if (selected instanceof AutoCompletionListItem) {
+               name = ((AutoCompletionListItem) selected).getValue();
+            } else {
                name = selected.toString();
             }
 
