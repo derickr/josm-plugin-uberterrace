@@ -26,11 +26,14 @@ import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.tagging.ac.AutoCompletionItem;
+import org.openstreetmap.josm.data.tagging.ac.AutoCompletionSet;
 import org.openstreetmap.josm.gui.ExtendedDialog;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.tagging.ac.AutoCompletingComboBox;
-import org.openstreetmap.josm.gui.tagging.ac.AutoCompletionListItem;
+import org.openstreetmap.josm.gui.tagging.ac.AutoCompletionManager;
+import org.openstreetmap.josm.gui.util.WindowGeometry;
 import org.openstreetmap.josm.tools.GBC;
-import org.openstreetmap.josm.tools.WindowGeometry;
 
 /**
  * The HouseNumberInputDialog is the layout of the house number input logic.
@@ -176,7 +179,7 @@ public class HouseNumberInputDialog extends ExtendedDialog {
             loLabel.setToolTipText(tr("Lowest housenumber of the terraced house"));
             hiLabel = new JLabel(tr("Highest Number"));
             numbersLabel = new JLabel(tr("List of Numbers"));
-			fancyExtensionLevelsLabel = new JLabel(tr("Levels in extension"));
+            fancyExtensionLevelsLabel = new JLabel(tr("Levels in extension"));
             loLabel.setPreferredSize(new Dimension(111, 16));
             final String txt = relationExists ? tr("add to existing associatedStreet relation") : tr("create an associatedStreet relation");
 
@@ -331,10 +334,8 @@ public class HouseNumberInputDialog extends ExtendedDialog {
     private AutoCompletingComboBox getBuilding() {
 
         if (buildingComboBox == null) {
-            final List<AutoCompletionListItem> values = Main.getLayerManager().getEditDataSet().getAutoCompletionManager().getValues("building");
-
             buildingComboBox = new AutoCompletingComboBox();
-            buildingComboBox.setPossibleACItems(values);
+            buildingComboBox.setPossibleAcItems(AutoCompletionManager.of(Main.main.getEditDataSet()).getTagValues("building"));
             buildingComboBox.setEditable(true);
             if (buildingType != null && !buildingType.isEmpty()) {
                 buildingComboBox.setSelectedItem(buildingType);
@@ -368,7 +369,7 @@ public class HouseNumberInputDialog extends ExtendedDialog {
             interpolation = new Choice();
             interpolation.add(tr("All"));
             interpolation.add(tr("Even/Odd"));
-            if (Main.pref.getInteger(INTERPOLATION, 2) == 1) {
+            if (Main.pref.getInt(INTERPOLATION, 2) == 1) {
                 interpolation.select(tr("All"));
             } else {
                 interpolation.select(tr("Even/Odd"));
@@ -383,7 +384,7 @@ public class HouseNumberInputDialog extends ExtendedDialog {
      */
     TreeSet<String> createAutoCompletionInfo() {
         final TreeSet<String> names = new TreeSet<>();
-        for (OsmPrimitive osm : Main.getLayerManager().getEditDataSet()
+        for (OsmPrimitive osm : MainApplication.getLayerManager().getEditDataSet()
                 .allNonDeletedPrimitives()) {
             if (osm.getKeys() != null && osm.keySet().contains("highway")
                     && osm.keySet().contains("name")) {

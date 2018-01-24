@@ -1,10 +1,4 @@
-/**
- * Terracer: A JOSM Plugin for terraced houses.
- *
- * Copyright 2009 CloudMade Ltd.
- *
- * Released under the GPLv2, see LICENSE file for details.
- */
+// License: GPL. For details, see LICENSE file.
 package terracer;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
@@ -17,10 +11,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,6 +31,7 @@ import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
@@ -43,7 +40,9 @@ import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ExtendedDialog;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.conflict.tags.CombinePrimitiveResolverDialog;
+import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Shortcut;
 import org.openstreetmap.josm.tools.UserCancelException;
@@ -59,16 +58,11 @@ import org.openstreetmap.josm.tools.UserCancelException;
  * why it couldn't be extended to work with other shapes too. The
  * algorithm employed is naive, but it works in the simple case.
  *
- * @author zere
+ * @author zere - Copyright 2009 CloudMade Ltd
  */
 public final class TerracerAction extends JosmAction {
 
-    // smsms1 asked for the last value to be remembered to make it easier to do
-    // repeated terraces. this is the easiest, but not necessarily nicest, way.
-    // private static String lastSelectedValue = "";
-
-    Collection<Command> commands;
-
+    private Collection<Command> commands;
     private Collection<OsmPrimitive> primitives;
     private TagCollection tagsInConflict;
 
@@ -80,7 +74,7 @@ public final class TerracerAction extends JosmAction {
                         Shortcut.SHIFT), true);
     }
 
-    protected static final Set<Relation> findAssociatedStreets(Collection<OsmPrimitive> objects) {
+    protected static Set<Relation> findAssociatedStreets(Collection<OsmPrimitive> objects) {
         Set<Relation> result = new HashSet<>();
         if (objects != null) {
             for (OsmPrimitive c : objects) {
@@ -188,7 +182,7 @@ public final class TerracerAction extends JosmAction {
                 throw new InvalidUserInputException("wrong or missing outline");
 
         } catch (InvalidUserInputException ex) {
-            Main.warn("Terracer: "+ex.getMessage());
+            Logging.warn("Terracer: "+ex.getMessage());
             new ExtendedDialog(Main.parent, tr("Invalid selection"), new String[] {"OK"})
                 .setButtonIcons(new String[] {"ok"}).setIcon(JOptionPane.INFORMATION_MESSAGE)
                 .setContent(tr("Select a single, closed way of at least four nodes. " +
@@ -201,7 +195,7 @@ public final class TerracerAction extends JosmAction {
         Relation associatedStreet = null;
 
         // Try to find an associatedStreet relation that could be reused from housenumbers, outline and street.
-        Set<OsmPrimitive> candidates = new HashSet<OsmPrimitive>(housenumbers);
+        Set<OsmPrimitive> candidates = new HashSet<>(housenumbers);
         candidates.add(outline);
         if (street != null) {
             candidates.add(street);
@@ -213,7 +207,7 @@ public final class TerracerAction extends JosmAction {
             associatedStreet = associatedStreets.iterator().next();
             if (associatedStreets.size() > 1) {
                 // TODO: Deal with multiple associated Streets
-                Main.warn("Terracer: Found "+associatedStreets.size()+" associatedStreet relations. Considering the first one only.");
+                Logging.warn("Terracer: Found "+associatedStreets.size()+" associatedStreet relations. Considering the first one only.");
             }
         }
 
@@ -227,7 +221,7 @@ public final class TerracerAction extends JosmAction {
             try {
                 terraceBuilding(outline, null, init, street, associatedStreet, 0, null, null, 0, housenumbers, streetname, associatedStreet != null, false, false, "yes", "");
             } catch (UserCancelException ex) {
-                // Ignore
+                Logging.trace(ex);
             } finally {
                 this.commands.clear();
                 this.commands = null;
@@ -254,7 +248,7 @@ public final class TerracerAction extends JosmAction {
      * @param house
      *            number nodes
      */
-    class HousenumberNodeComparator implements Comparator<Node> {
+    static class HousenumberNodeComparator implements Comparator<Node> {
         private final Pattern pat = Pattern.compile("^(\\d+)\\s*(.*)");
 
         @Override
@@ -274,8 +268,7 @@ public final class TerracerAction extends JosmAction {
                     Integer node2Int = Integer.valueOf(mat.group(1));
                     // If the numbers are the same, the rest has to make the decision,
                     // e.g. when comparing 23, 23a and 23b.
-                    if (node1Int.equals(node2Int))
-                    {
+                    if (node1Int.equals(node2Int)) {
                       String node2Rest = mat.group(2);
                       return node1Rest.compareTo(node2Rest);
                     }
@@ -300,7 +293,7 @@ public final class TerracerAction extends JosmAction {
      * @param template The closed way acting as a template.
      * @param init The node that hints at which side to start the numbering
      * @param street The street, the buildings belong to (may be null)
-     * @param associatedStreet
+     * @param associatedStreet associated street relation
      * @param segments The number of segments to generate
      * @param start Starting housenumber
      * @param end Ending housenumber
@@ -314,14 +307,14 @@ public final class TerracerAction extends JosmAction {
      * @param keepOutline If the outline way should be kept
      * @param fancyOutline If the template (if selected) should be used
      * @param buildingValue The value for {@code building} key to add
-     * @throws UserCancelException
+     * @throws UserCancelException if user cancels the operation
      */
     public void terraceBuilding(final Way outline, final Way template, Node init, Way street, Relation associatedStreet, Integer segments,
                 String start, String end, int step, List<Node> housenumbers, String streetName, boolean handleRelations,
                 boolean keepOutline, boolean fancyOutline, String buildingValue, String levels) throws UserCancelException {
         final int nb;
         Integer to = null, from = null;
-		int fancyExtensionLevels = -1;
+        int fancyExtensionLevels = -1;
         if (housenumbers == null || housenumbers.isEmpty()) {
             to = getNumber(end);
             from = getNumber(start);
@@ -339,9 +332,9 @@ public final class TerracerAction extends JosmAction {
         } else {
             nb = housenumbers.size();
         }
-		if (!levels.equals("")) {
-			fancyExtensionLevels = getNumber(levels);
-		}
+        if (!levels.equals("")) {
+            fancyExtensionLevels = getNumber(levels);
+        }
 
         // now find which is the longest side connecting the first node
         Pair<Way, Way> interp = findFrontAndBack(outline);
@@ -371,12 +364,12 @@ public final class TerracerAction extends JosmAction {
         this.commands = new LinkedList<>();
         Collection<Way> ways = new LinkedList<>();
         Collection<Node> middleNodes = new LinkedList<>();
+        DataSet ds = getLayerManager().getEditDataSet();
 
         if (nb > 1) {
             // add required new nodes and build list of nodes to reuse
             for (int i = 0; i <= nb; ++i) {
                 int iDir = swap ? nb - i : i;
-
                 newNodes[0][i] = interpolateAlong(interp.a, frontLength * iDir / nb);
                 if (!fancyOutline) {
                     newNodes[1][i] = interpolateAlong(interp.b, backLength * iDir / nb);
@@ -407,26 +400,26 @@ public final class TerracerAction extends JosmAction {
                     }
                 }
                 if (!outline.containsNode(newNodes[0][i]))
-                    this.commands.add(new AddCommand(newNodes[0][i]));
+                    this.commands.add(new AddCommand(ds, newNodes[0][i]));
                 else
                     reusedNodes.add(newNodes[0][i]);
                 if (!outline.containsNode(newNodes[1][i]))
-                    this.commands.add(new AddCommand(newNodes[1][i]));
+                    this.commands.add(new AddCommand(ds, newNodes[1][i]));
                 else
                     reusedNodes.add(newNodes[1][i]);
                 if (fancyOutline && i != nb) {
                     if (!outline.containsNode(newNodes[2][i]))
-                        this.commands.add(new AddCommand(newNodes[2][i]));
+                        this.commands.add(new AddCommand(ds, newNodes[2][i]));
                     else
                         reusedNodes.add(newNodes[2][i]);
                     if (!outline.containsNode(newNodes[3][i]))
-                        this.commands.add(new AddCommand(newNodes[3][i]));
+                        this.commands.add(new AddCommand(ds, newNodes[3][i]));
                     else
                         reusedNodes.add(newNodes[3][i]);
 
-					if (i % 2 == 0 && fancyExtensionLevels != -1) {
-						this.commands.add(new AddCommand(newNodes[4][i]));
-					}
+                    if (i % 2 == 0 && fancyExtensionLevels != -1) {
+                        this.commands.add(new AddCommand(ds, newNodes[4][i]));
+                    }
                 }
             }
 
@@ -434,15 +427,15 @@ public final class TerracerAction extends JosmAction {
             for (int i = 0; i < nb; ++i) {
                 final Way terr;
 
-				terr = new Way();
+                terr = new Way();
 
-				TagCollection.from(outline).applyTo(terr);
+                TagCollection.from(outline).applyTo(terr);
 
                 terr.addNode(newNodes[0][i]);
                 terr.addNode(newNodes[0][i + 1]);
                 if (fancyOutline && i % 2 == 0 && fancyExtensionLevels != -1) {
-					terr.addNode(newNodes[4][i]);
-				}
+                    terr.addNode(newNodes[4][i]);
+                }
                 terr.addNode(newNodes[1][i + 1]);
 
                 if (fancyOutline) {
@@ -453,23 +446,25 @@ public final class TerracerAction extends JosmAction {
                     terr.addNode(newNodes[1][i]);
                 }
                 if (fancyOutline && (i % 2 == 1) && fancyExtensionLevels != -1) {
-					terr.addNode(newNodes[4][i-1]);
-				}
+                    terr.addNode(newNodes[4][i-1]);
+                }
                 terr.addNode(newNodes[0][i]);
 
-                ways.add(addressBuilding(terr, street, streetName, associatedStreet, housenumbers, i,
-                        from != null ? Integer.toString(from + i * step) : null, buildingValue));
+                addressBuilding(terr, street, streetName, associatedStreet, housenumbers, i,
+                        from != null ? Integer.toString(from + i * step) : null, buildingValue);
+                ways.add(terr);
 
-				this.commands.add(new AddCommand(terr));
+                this.commands.add(new AddCommand(terr));
 
-				if (fancyExtensionLevels != -1) {
-					final Way roofPart;
+                if (fancyExtensionLevels != -1) {
+                    final Way roofPart;
 
-					roofPart = new Way();
+                    roofPart = new Way();
 
-					TagCollection.from(outline).applyTo(roofPart);
-					roofPart.addNode(newNodes[0][i]);
-					roofPart.addNode(newNodes[0][i+1]);
+                    TagCollection.from(outline).applyTo(roofPart);
+                    roofPart.addNode(newNodes[0][i]);
+                    roofPart.addNode(newNodes[0][i+1]);
+                    
                     if (i % 2 == 0) {
                         roofPart.addNode(newNodes[4][i]);
                         roofPart.addNode(newNodes[2][i]);
@@ -479,6 +474,7 @@ public final class TerracerAction extends JosmAction {
                         roofPart.addNode(newNodes[3][i]);
                         roofPart.addNode(newNodes[4][i-1]);
                     }
+
 					roofPart.addNode(newNodes[0][i]);
 
 					roofPart.remove("building");
@@ -498,24 +494,24 @@ public final class TerracerAction extends JosmAction {
                 // Delete outline nodes having no tags and referrers but the outline itself
                 List<Node> nodes = outline.getNodes();
                 ArrayList<Node> nodesToDelete = new ArrayList<>();
-                for (Node n : nodes)
+                for (Node n : nodes) {
                     if (!n.hasKeys() && n.getReferrers().size() == 1 && !reusedNodes.contains(n))
                         nodesToDelete.add(n);
+                }
                 if (!nodesToDelete.isEmpty())
-                    this.commands.add(DeleteCommand.delete(Main.getLayerManager().getEditLayer(), nodesToDelete));
-
+                    this.commands.add(DeleteCommand.delete(nodesToDelete));
                 this.commands.add(new DeleteCommand(outline));
             }
         } else {
             // Single building, just add the address details
-            ways.add(addressBuilding(outline, street, streetName, associatedStreet, housenumbers, 0, start, buildingValue));
+            addressBuilding(outline, street, streetName, associatedStreet, housenumbers, 0, start, buildingValue);
+            ways.add(outline);
         }
 
         // Remove the address nodes since their tags have been incorporated into the terraces.
         // Or should removing them also be an option?
         if (!housenumbers.isEmpty()) {
-            commands.add(DeleteCommand.delete(Main.getLayerManager().getEditLayer(),
-                    housenumbers, true, true));
+            commands.add(DeleteCommand.delete(housenumbers, true, true));
         }
 
         if (handleRelations) { // create a new relation or merge with existing
@@ -526,16 +522,16 @@ public final class TerracerAction extends JosmAction {
             }
         }
 
-        Main.main.undoRedo.add(createTerracingCommand(outline));
+        MainApplication.undoRedo.add(createTerracingCommand(outline));
         if (nb <= 1 && street != null) {
             // Select the way (for quick selection of a new house (with the same way))
-            Main.getLayerManager().getEditDataSet().setSelected(street);
+            MainApplication.getLayerManager().getEditDataSet().setSelected(street);
         } else {
             // Select the new building outlines (for quick reversing)
             if (fancyOutline) {
-                Main.getLayerManager().getEditDataSet().setSelected(middleNodes);
+                MainApplication.getLayerManager().getEditDataSet().setSelected(middleNodes);
             } else {
-                Main.getLayerManager().getEditDataSet().setSelected(ways);
+                MainApplication.getLayerManager().getEditDataSet().setSelected(ways);
             }
         }
     }
@@ -565,7 +561,7 @@ public final class TerracerAction extends JosmAction {
         for (Way w : ways) {
             associatedStreet.addMember(new RelationMember("house", w));
         }
-        this.commands.add(new AddCommand(associatedStreet));
+        this.commands.add(new AddCommand(getLayerManager().getEditDataSet(), associatedStreet));
     }
 
     private Command createTerracingCommand(final Way outline) {
@@ -593,7 +589,7 @@ public final class TerracerAction extends JosmAction {
                             }
                         }
                     } catch (UserCancelException e) {
-                        // Ignore
+                        Logging.trace(e);
                     }
                 }
                 return result;
@@ -610,13 +606,14 @@ public final class TerracerAction extends JosmAction {
      * @param associatedStreet The associated street. Used to determine if addr:street should be set or not.
      * @param buildingValue The value for {@code building} key to add
      * @return {@code outline}
-     * @throws UserCancelException
+     * @throws UserCancelException if user cancels the operation
      */
-    private Way addressBuilding(Way outline, Way street, String streetName, Relation associatedStreet,
+    private void addressBuilding(Way outline, Way street, String streetName, Relation associatedStreet,
             List<Node> housenumbers, int i, String defaultNumber, String buildingValue) throws UserCancelException {
         Node houseNum = (housenumbers != null && i >= 0 && i < housenumbers.size()) ? housenumbers.get(i) : null;
         boolean buildingAdded = false;
         boolean numberAdded = false;
+        Map<String, String> tags = new HashMap<>();
         if (houseNum != null) {
             primitives = Arrays.asList(new OsmPrimitive[]{houseNum, outline});
 
@@ -625,27 +622,29 @@ public final class TerracerAction extends JosmAction {
             tagsToCopy = tagsToCopy.minus(tagsInConflict).minus(TagCollection.from(outline));
 
             for (Tag tag : tagsToCopy) {
-                this.commands.add(new ChangePropertyCommand(outline, tag.getKey(), tag.getValue()));
+                tags.put(tag.getKey(), tag.getValue());
             }
 
             buildingAdded = houseNum.hasKey("building");
             numberAdded = houseNum.hasKey("addr:housenumber");
         }
         if (!buildingAdded && buildingValue != null && !buildingValue.isEmpty()) {
-            this.commands.add(new ChangePropertyCommand(outline, "building", buildingValue));
+            tags.put("building", buildingValue);
         }
         if (defaultNumber != null && !numberAdded) {
-            this.commands.add(new ChangePropertyCommand(outline, "addr:housenumber", defaultNumber));
+            tags.put("addr:housenumber", defaultNumber);
         }
         // Only put addr:street if no relation exists or if it has no name
         if (associatedStreet == null || !associatedStreet.hasKey("name")) {
             if (street != null) {
-                this.commands.add(new ChangePropertyCommand(outline, "addr:street", street.get("name")));
+                tags.put("addr:street", street.get("name"));
             } else if (streetName != null && !streetName.trim().isEmpty()) {
-                this.commands.add(new ChangePropertyCommand(outline, "addr:street", streetName.trim()));
+                tags.put("addr:street", streetName.trim());
             }
         }
-        return outline;
+        if (!tags.isEmpty()) {
+            commands.add(new ChangePropertyCommand(getLayerManager().getEditDataSet(), Collections.singleton(outline), tags));
+        }
     }
 
     /**
@@ -661,9 +660,9 @@ public final class TerracerAction extends JosmAction {
      * @return A node at a distance l along w from the first point.
      */
     private Node interpolateAlong(Way w, double l) {
-        List<Pair<Node,Node>> pairs = w.getNodePairs(false);
+        List<Pair<Node, Node>> pairs = w.getNodePairs(false);
         for (int i = 0; i < pairs.size(); ++i) {
-            Pair<Node,Node> p = pairs.get(i);
+            Pair<Node, Node> p = pairs.get(i);
             final double seg_length = p.a.getCoor().greatCircleDistance(p.b.getCoor());
             if (l <= seg_length || i == pairs.size() - 1) {
                 // be generous on the last segment (numerical roudoff can lead to a small overshoot)
@@ -811,7 +810,7 @@ public final class TerracerAction extends JosmAction {
             public double x;
             public int i;
 
-            public SortWithIndex(double a, int b) {
+            SortWithIndex(double a, int b) {
                 x = a;
                 i = b;
             }
