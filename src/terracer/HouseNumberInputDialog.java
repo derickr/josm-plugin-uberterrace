@@ -54,6 +54,7 @@ public class HouseNumberInputDialog extends ExtendedDialog {
     static final String KEEP_OUTLINE = "plugins.terracer.keep_outline";
     static final String FANCY_OUTLINE = "plugins.terracer.fancy_outline";
     static final String INTERPOLATION = "plugins.terracer.interpolation";
+    static final String NEXT_HOUSENR = "plugins.terracer.next_housenr";
 
     //private final Way street;
     private final String streetName;
@@ -251,6 +252,10 @@ public class HouseNumberInputDialog extends ExtendedDialog {
         if (lo == null) {
             lo = new JTextField();
             lo.setText("");
+            int nextNr = Main.pref.getInt(NEXT_HOUSENR, 0);
+            if (nextNr > 0) {
+                lo.setText(String.valueOf(nextNr));
+            }
         }
         return lo;
     }
@@ -354,7 +359,7 @@ public class HouseNumberInputDialog extends ExtendedDialog {
     private JTextField getSegments() {
         if (segments == null) {
             segments = new JTextField();
-            segments.setText(Main.pref.get(DEFAULT_SEGMENTS, "2"));
+            segments.setText(Main.pref.get(DEFAULT_SEGMENTS, "1"));
         }
         return segments;
     }

@@ -460,7 +460,19 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
     public void saveValues() {
         Main.pref.putBoolean(HouseNumberInputDialog.HANDLE_RELATION, doHandleRelation());
         Main.pref.putBoolean(HouseNumberInputDialog.KEEP_OUTLINE, doKeepOutline());
-        Main.pref.putBoolean(HouseNumberInputDialog.FANCY_OUTLINE, doFancyOutline();
+        Main.pref.putBoolean(HouseNumberInputDialog.FANCY_OUTLINE, doFancyOutline());
+
+        /* Find out what is the next number to use is */
+        int newNr = 0;
+        if (numberFrom() != null) {
+            newNr = numberFrom().intValue();
+        }
+        if (numberTo() != null) {
+            newNr = numberTo().intValue();
+        }
+        newNr += stepSize();
+        Main.pref.put(HouseNumberInputDialog.NEXT_HOUSENR, String.valueOf(newNr));
+
         Main.pref.put(HouseNumberInputDialog.INTERPOLATION, stepSize().toString());
     }
 }
