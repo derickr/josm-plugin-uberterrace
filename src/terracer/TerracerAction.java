@@ -454,7 +454,7 @@ public final class TerracerAction extends JosmAction {
                         from != null ? Integer.toString(from + i * step) : null, buildingValue);
                 ways.add(terr);
 
-                this.commands.add(new AddCommand(terr));
+                this.commands.add(new AddCommand(ds, terr));
 
                 if (fancyExtensionLevels != -1) {
                     final Way roofPart;
@@ -486,7 +486,7 @@ public final class TerracerAction extends JosmAction {
                     terr.put("building:levels", String.valueOf(fancyExtensionLevels));
 					terr.put("roof:shape", "flat");
 
-					this.commands.add(new AddCommand(roofPart));
+					this.commands.add(new AddCommand(ds, roofPart));
 				}
             }
 
