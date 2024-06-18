@@ -115,7 +115,7 @@ public class HouseNumberInputDialog extends ExtendedDialog {
         handler.dialog = this;
         JPanel content = getInputPanel();
         setContent(content);
-        setButtonIcons(new String[] {"ok.png", "cancel.png" });
+        setButtonIcons(new String[] {"ok", "cancel" });
         getJContentPane();
         initialize();
         setDefaultButton(1);

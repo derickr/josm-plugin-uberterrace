@@ -181,7 +181,7 @@ public final class UberTerracerAction extends JosmAction {
         } catch (InvalidUserInputException ex) {
             Logging.warn("UberTerracer: "+ex.getMessage());
             new ExtendedDialog(MainApplication.getMainFrame(), tr("Invalid selection"), new String[] {"OK"})
-                .setButtonIcons(new String[] {"ok"}).setIcon(JOptionPane.INFORMATION_MESSAGE)
+                .setButtonIcons("ok").setIcon(JOptionPane.INFORMATION_MESSAGE)
                 .setContent(tr("Select a single, closed way of at least four nodes. " +
                     "(Optionally you can also select a street for the addr:street tag " +
                     "and a node to mark the start of numbering.)"))

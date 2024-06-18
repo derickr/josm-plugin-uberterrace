@@ -2,11 +2,11 @@ Manifest-Version: 1.0
 Ant-Version: Apache Ant 1.10.14
 Created-By: 17.0.11+9-Debian-1 (Debian)
 Plugin-Mainversion: 10580
-Plugin-Version: 1718725961
+Plugin-Version: 1718727803
 Plugin-Class: uberterracer.UberTerracerPlugin
 Plugin-Description: Make terraced houses out of single blocks, with fa
  ncy shapes and roofs
-Plugin-Date: 2024-06-18 16:52:41 +0100
+Plugin-Date: 2024-06-18 17:23:23 +0100
 Author: Derick Rethans
 Plugin-Icon: images/terrace.png
 
