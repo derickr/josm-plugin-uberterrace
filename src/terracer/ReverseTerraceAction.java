@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package terracer;
+package uberterracer;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 

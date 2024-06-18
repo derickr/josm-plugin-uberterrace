@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package terracer;
+package uberterracer;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
@@ -45,16 +45,16 @@ import org.openstreetmap.josm.tools.GBC;
  */
 public class HouseNumberInputDialog extends ExtendedDialog {
     /*
-    static final String MIN_NUMBER = "plugin.terracer.lowest_number";
-    static final String MAX_NUMBER = "plugin.terracer.highest_number";
-    static final String INTERPOLATION = "plugin.terracer.interpolation_mode";
+    static final String MIN_NUMBER = "plugin.uberterracer.lowest_number";
+    static final String MAX_NUMBER = "plugin.uberterracer.highest_number";
+    static final String INTERPOLATION = "plugin.uberterracer.interpolation_mode";
     */
-    static final String DEFAULT_SEGMENTS = "plugins.terracer.segments";
-    static final String HANDLE_RELATION = "plugins.terracer.handle_relation";
-    static final String KEEP_OUTLINE = "plugins.terracer.keep_outline";
-    static final String FANCY_OUTLINE = "plugins.terracer.fancy_outline";
-    static final String INTERPOLATION = "plugins.terracer.interpolation";
-    static final String NEXT_HOUSENR = "plugins.terracer.next_housenr";
+    static final String DEFAULT_SEGMENTS = "plugins.uberterracer.segments";
+    static final String HANDLE_RELATION = "plugins.uberterracer.handle_relation";
+    static final String KEEP_OUTLINE = "plugins.uberterracer.keep_outline";
+    static final String FANCY_OUTLINE = "plugins.uberterracer.fancy_outline";
+    static final String INTERPOLATION = "plugins.uberterracer.interpolation";
+    static final String NEXT_HOUSENR = "plugins.uberterracer.next_housenr";
 
     //private final Way street;
     private final String streetName;

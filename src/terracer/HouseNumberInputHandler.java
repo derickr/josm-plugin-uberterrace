@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package terracer;
+package uberterracer;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
@@ -39,7 +39,7 @@ import org.openstreetmap.josm.tools.UserCancelException;
  * @author casualwalker - Copyright 2009 CloudMade Ltd
  */
 public class HouseNumberInputHandler extends JosmAction implements ActionListener, FocusListener, ItemListener {
-    private final TerracerAction terracerAction;
+    private final UberTerracerAction terracerAction;
     private final Way outline, template, street;
     private final String streetName;
     private final Node init;
@@ -63,7 +63,7 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
      * @param housenumbers a list of house number nodes in this outline (may be empty)
      * @param title the title
      */
-    public HouseNumberInputHandler(final TerracerAction terracerAction,
+    public HouseNumberInputHandler(final UberTerracerAction terracerAction,
             final Way outline, final Way template, final Node init, final Way street, final String streetName, final String buildingType,
             final Relation associatedStreet,
             final ArrayList<Node> housenumbers, final String title) {
@@ -206,7 +206,7 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
 
                 int steps = segments / stepSize();
                 steps++; // difference 0 means 1 building, see
-                // TerracerActon.terraceBuilding
+                // UberTerracerActon.terraceBuilding
                 dialog.segments.setText(String.valueOf(steps));
                 dialog.segments.setEditable(false);
             }
@@ -426,7 +426,7 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
             return this.dialog.handleRelationCheckBox.isSelected();
         }
     }
-    
+
     /**
      * Whether the user wants fancy outlines.
      */

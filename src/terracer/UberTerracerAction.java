@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package terracer;
+package uberterracer;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trn;
@@ -60,16 +60,16 @@ import org.openstreetmap.josm.tools.UserCancelException;
  *
  * @author zere - Copyright 2009 CloudMade Ltd
  */
-public final class TerracerAction extends JosmAction {
+public final class UberTerracerAction extends JosmAction {
 
     private Collection<Command> commands;
     private Collection<OsmPrimitive> primitives;
     private TagCollection tagsInConflict;
 
-    public TerracerAction() {
+    public UberTerracerAction() {
         super(tr("Terrace a building"), "terrace",
                 tr("Creates individual buildings from a long building."),
-                Shortcut.registerShortcut("tools:Terracer", tr("Tool: {0}",
+                Shortcut.registerShortcut("tools:UberTerracer", tr("Tool: {0}",
                         tr("Terrace a building")), KeyEvent.VK_T,
                         Shortcut.SHIFT), true);
     }
@@ -182,7 +182,7 @@ public final class TerracerAction extends JosmAction {
                 throw new InvalidUserInputException("wrong or missing outline");
 
         } catch (InvalidUserInputException ex) {
-            Logging.warn("Terracer: "+ex.getMessage());
+            Logging.warn("UberTerracer: "+ex.getMessage());
             new ExtendedDialog(Main.parent, tr("Invalid selection"), new String[] {"OK"})
                 .setButtonIcons(new String[] {"ok"}).setIcon(JOptionPane.INFORMATION_MESSAGE)
                 .setContent(tr("Select a single, closed way of at least four nodes. " +
@@ -207,7 +207,7 @@ public final class TerracerAction extends JosmAction {
             associatedStreet = associatedStreets.iterator().next();
             if (associatedStreets.size() > 1) {
                 // TODO: Deal with multiple associated Streets
-                Logging.warn("Terracer: Found "+associatedStreets.size()+" associatedStreet relations. Considering the first one only.");
+                Logging.warn("UberTerracer: Found "+associatedStreets.size()+" associatedStreet relations. Considering the first one only.");
             }
         }
 
@@ -324,7 +324,7 @@ public final class TerracerAction extends JosmAction {
                 nb = segments.intValue();
             } else {
                 // if we get here, there is is a bug in the input validation.
-                throw new TerracerRuntimeException(
+                throw new UberTerracerRuntimeException(
                         "Could not determine segments from parameters, this is a bug. "
                                 + "Parameters were: segments " + segments
                                 + " from " + from + " to " + to + " step " + step);
@@ -464,7 +464,7 @@ public final class TerracerAction extends JosmAction {
                     TagCollection.from(outline).applyTo(roofPart);
                     roofPart.addNode(newNodes[0][i]);
                     roofPart.addNode(newNodes[0][i+1]);
-                    
+
                     if (i % 2 == 0) {
                         roofPart.addNode(newNodes[4][i]);
                         roofPart.addNode(newNodes[2][i]);
