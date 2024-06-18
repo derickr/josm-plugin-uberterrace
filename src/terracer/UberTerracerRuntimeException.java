@@ -1,5 +1,5 @@
 // License: GPL. For details, see LICENSE file.
-package terracer;
+package uberterracer;
 
 /**
  * The Class UberTerracerRuntimeException indicates errors from the UberTerracer Plugin.

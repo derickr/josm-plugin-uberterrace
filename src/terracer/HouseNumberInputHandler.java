@@ -18,13 +18,14 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
-import org.openstreetmap.josm.Main;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.tagging.ac.AutoCompletionItem;
-import org.openstreetmap.josm.gui.tagging.ac.AutoCompletingComboBox;
+import org.openstreetmap.josm.gui.tagging.ac.AutoCompComboBox;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.UserCancelException;
 
@@ -391,7 +392,7 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
         return getItemText(dialog.buildingComboBox);
     }
 
-    private static String getItemText(AutoCompletingComboBox box) {
+    private static String getItemText(AutoCompComboBox<?> box) {
         Object selected = box.getSelectedItem();
         if (selected == null) {
             return null;
@@ -458,9 +459,9 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
      * Saves settings.
      */
     public void saveValues() {
-        Main.pref.putBoolean(HouseNumberInputDialog.HANDLE_RELATION, doHandleRelation());
-        Main.pref.putBoolean(HouseNumberInputDialog.KEEP_OUTLINE, doKeepOutline());
-        Main.pref.putBoolean(HouseNumberInputDialog.FANCY_OUTLINE, doFancyOutline());
+        Config.getPref().putBoolean(HouseNumberInputDialog.HANDLE_RELATION, doHandleRelation());
+        Config.getPref().putBoolean(HouseNumberInputDialog.KEEP_OUTLINE, doKeepOutline());
+        Config.getPref().putBoolean(HouseNumberInputDialog.FANCY_OUTLINE, doFancyOutline());
 
         /* Find out what is the next number to use is */
         int newNr = 0;
@@ -471,8 +472,8 @@ public class HouseNumberInputHandler extends JosmAction implements ActionListene
             newNr = numberTo().intValue();
         }
         newNr += stepSize();
-        Main.pref.put(HouseNumberInputDialog.NEXT_HOUSENR, String.valueOf(newNr));
+        Config.getPref().put(HouseNumberInputDialog.NEXT_HOUSENR, String.valueOf(newNr));
 
-        Main.pref.put(HouseNumberInputDialog.INTERPOLATION, stepSize().toString());
+        Config.getPref().put(HouseNumberInputDialog.INTERPOLATION, stepSize().toString());
     }
 }

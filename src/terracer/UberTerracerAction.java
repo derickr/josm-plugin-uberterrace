@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
-import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.ChangeCommand;
@@ -31,6 +30,7 @@ import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -46,6 +46,7 @@ import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Shortcut;
 import org.openstreetmap.josm.tools.UserCancelException;
+import org.openstreetmap.josm.tools.Utils;
 
 /**
  * Terraces a quadrilateral, closed way into a series of quadrilateral,
@@ -119,10 +120,8 @@ public final class UberTerracerAction extends JosmAction {
 
                 outline = (Way) prim;
             } else if (sel.size() > 1) {
-                List<Way> ways = OsmPrimitive.getFilteredList(sel, Way.class);
-                Iterator<Way> wit = ways.iterator();
-                while (wit.hasNext()) {
-                    Way way = wit.next();
+                List<Way> ways = new ArrayList<>(Utils.filteredCollection(sel, Way.class));
+				for (Way way: ways) {
                     if (way.hasKey("template")) {
                         if (template != null)
                             // already have template
@@ -147,12 +146,10 @@ public final class UberTerracerAction extends JosmAction {
                 if (outline == null)
                     throw new InvalidUserInputException("no outline way found");
 
-                List<Node> nodes = OsmPrimitive.getFilteredList(sel, Node.class);
-                Iterator<Node> nit = nodes.iterator();
+                List<Node> nodes = new ArrayList<>(Utils.filteredCollection(sel, Node.class));
                 // Actually this should test if the selected address nodes lie
                 // within the selected outline. Any ideas how to do this?
-                while (nit.hasNext()) {
-                    Node node = nit.next();
+                for (Node node: nodes) {
                     if (node.hasKey("addr:housenumber")) {
                         String nodesStreetName = node.get("addr:street");
                         // if a node has a street name if must be equal
@@ -183,7 +180,7 @@ public final class UberTerracerAction extends JosmAction {
 
         } catch (InvalidUserInputException ex) {
             Logging.warn("UberTerracer: "+ex.getMessage());
-            new ExtendedDialog(Main.parent, tr("Invalid selection"), new String[] {"OK"})
+            new ExtendedDialog(MainApplication.getMainFrame(), tr("Invalid selection"), new String[] {"OK"})
                 .setButtonIcons(new String[] {"ok"}).setIcon(JOptionPane.INFORMATION_MESSAGE)
                 .setContent(tr("Select a single, closed way of at least four nodes. " +
                     "(Optionally you can also select a street for the addr:street tag " +
@@ -522,7 +519,7 @@ public final class UberTerracerAction extends JosmAction {
             }
         }
 
-        MainApplication.undoRedo.add(createTerracingCommand(outline));
+        UndoRedoHandler.getInstance().add(createTerracingCommand(outline));
         if (nb <= 1 && street != null) {
             // Select the way (for quick selection of a new house (with the same way))
             MainApplication.getLayerManager().getEditDataSet().setSelected(street);
