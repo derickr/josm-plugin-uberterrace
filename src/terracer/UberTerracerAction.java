@@ -660,7 +660,7 @@ public final class UberTerracerAction extends JosmAction {
         List<Pair<Node, Node>> pairs = w.getNodePairs(false);
         for (int i = 0; i < pairs.size(); ++i) {
             Pair<Node, Node> p = pairs.get(i);
-            final double seg_length = p.a.getCoor().greatCircleDistance(p.b.getCoor());
+            final double seg_length = p.a.greatCircleDistance(p.b);
             if (l <= seg_length || i == pairs.size() - 1) {
                 // be generous on the last segment (numerical roudoff can lead to a small overshoot)
                 return interpolateNode(p.a, p.b, l / seg_length);
@@ -682,7 +682,7 @@ public final class UberTerracerAction extends JosmAction {
     private double wayLength(Way w) {
         double length = 0.0;
         for (Pair<Node, Node> p : w.getNodePairs(false)) {
-            length += p.a.getCoor().greatCircleDistance(p.b.getCoor());
+            length += p.a.greatCircleDistance(p.b);
         }
         return length;
     }
@@ -787,7 +787,7 @@ public final class UberTerracerAction extends JosmAction {
     private double sideLength(Way w, int i) {
         Node a = w.getNode(i);
         Node b = w.getNode((i + 1) % (w.getNodesCount() - 1));
-        return a.getCoor().greatCircleDistance(b.getCoor());
+        return a.greatCircleDistance(b);
     }
 
     /**
